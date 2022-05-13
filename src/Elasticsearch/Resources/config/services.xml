@@ -181,6 +181,13 @@
             <tag name="console.command"/>
         </service>
 
+        <service id="Shopware\Elasticsearch\Framework\Command\ElasticsearchAdminIndexingCommand">
+            <argument type="service" id="Elasticsearch\Client"/>
+            <argument type="service" id="Shopware\Core\Framework\DataAbstractionLayer\Dbal\Common\IteratorFactory"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <tag name="console.command"/>
+        </service>
+
         <service id="Shopware\Elasticsearch\Framework\ElasticsearchOutdatedIndexDetector">
             <argument type="service" id="Elasticsearch\Client"/>
             <argument type="service" id="Shopware\Elasticsearch\Framework\ElasticsearchRegistry"/>

@@ -456,13 +456,22 @@ Component.register('sw-search-bar', {
                 return;
             }
 
-            const queries = this.searchRankingService.buildGlobalSearchQueries(
-                this.userSearchPreference,
-                searchTerm,
-                this.criteriaCollection,
-                this.searchLimit,
-            );
-            const response = await this.searchService.searchQuery(queries, { 'sw-inheritance': true });
+            const useElastic = true;
+
+            let response;
+
+            if (useElastic) {
+                response = await this.searchService.elastic(searchTerm, { 'sw-inheritance': true });
+            } else {
+                const queries = this.searchRankingService.buildGlobalSearchQueries(
+                    this.userSearchPreference,
+                    searchTerm,
+                    this.criteriaCollection,
+                    this.searchLimit,
+                );
+                response = await this.searchService.searchQuery(queries, { 'sw-inheritance': true });
+            }
+
             const data = response.data;
 
             if (!data) {
