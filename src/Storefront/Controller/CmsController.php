@@ -7,7 +7,6 @@ use Shopware\Core\Content\Cms\Exception\PageNotFoundException;
 use Shopware\Core\Content\Cms\SalesChannel\AbstractCmsRoute;
 use Shopware\Core\Content\Product\SalesChannel\Detail\AbstractProductDetailRoute;
 use Shopware\Core\Content\Product\SalesChannel\Listing\AbstractProductListingRoute;
-use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Content\Property\Listing\AbstractPropertyListingLoader;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\Routing\Annotation\Since;
@@ -178,22 +177,15 @@ class CmsController extends StorefrontController
 
     /**
      * @Since("6.0.0.0")
+     * @HttpCache()
      *
      * Route to load the listing filters
      *
      * @Route("/widgets/properties/{groupId}", name="frontend.listing.properties", methods={"GET", "POST"}, defaults={"XmlHttpRequest"=true, "_routeScope"={"storefront"}})
      */
-    public function properties(string $groupId, Request $request, SalesChannelContext $context): Response
+    public function properties(string $groupId, SalesChannelContext $context): Response
     {
         $options = $this->propertyLoader->load($groupId, $context->getContext());
-
-        $ids = $request->get('optionIds', []);
-
-        if (!empty($ids)) {
-            $options = $options->filter(function (PropertyGroupOptionEntity $option) use ($ids) {
-                return \in_array($option->getId(), $ids, true);
-            });
-        }
 
         return $this->render('@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig', ['elements' => $options]);
     }

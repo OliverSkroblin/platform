@@ -12,9 +12,8 @@ use Shopware\Core\Content\Product\Events\ProductSuggestCriteriaEvent;
 use Shopware\Core\Content\Product\SalesChannel\Exception\ProductSortingNotFoundException;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingCollection;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingEntity;
-use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionCollection;
+use Shopware\Core\Content\Property\Listing\AbstractPropertyAggregationResolver;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\Dbal\Common\RepositoryIterator;
 use Shopware\Core\Framework\DataAbstractionLayer\Doctrine\FetchModeHelper;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityCollection;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
@@ -24,7 +23,6 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Aggregation\Metric\Entit
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Aggregation\Metric\MaxAggregation;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Aggregation\Metric\StatsAggregation;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Bucket\TermsResult;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
@@ -45,46 +43,31 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 
     public const PROPERTY_GROUP_IDS_REQUEST_PARAM = 'property-whitelist';
 
-    /**
-     * @var EntityRepositoryInterface
-     */
-    private $optionRepository;
+    private EntityRepositoryInterface $sortingRepository;
 
-    /**
-     * @var EntityRepositoryInterface
-     */
-    private $sortingRepository;
+    private Connection $connection;
 
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private SystemConfigService $systemConfigService;
 
-    /**
-     * @var SystemConfigService
-     */
-    private $systemConfigService;
+    private EventDispatcherInterface $dispatcher;
 
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
+    private AbstractPropertyAggregationResolver $propertyAggregationResolver;
 
     /**
      * @internal
      */
     public function __construct(
         Connection $connection,
-        EntityRepositoryInterface $optionRepository,
         EntityRepositoryInterface $productSortingRepository,
         SystemConfigService $systemConfigService,
-        EventDispatcherInterface $dispatcher
+        EventDispatcherInterface $dispatcher,
+        AbstractPropertyAggregationResolver $propertyAggregationResolver
     ) {
-        $this->optionRepository = $optionRepository;
         $this->sortingRepository = $productSortingRepository;
         $this->connection = $connection;
         $this->systemConfigService = $systemConfigService;
         $this->dispatcher = $dispatcher;
+        $this->propertyAggregationResolver = $propertyAggregationResolver;
     }
 
     public static function getSubscribedEvents(): array
@@ -170,7 +153,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     public function handleResult(ProductListingResultEvent $event): void
     {
         Profiler::trace('product-listing::feature-subscriber', function () use ($event): void {
-            $this->groupOptionAggregations($event);
+            $this->propertyAggregationResolver->resolve($event->getResult(), $event->getContext());
 
             $this->addCurrentFilters($event);
 
@@ -352,43 +335,6 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         $properties = $properties ? $properties->getKeys() : [];
 
         return array_unique(array_filter(array_merge($options, $properties)));
-    }
-
-    private function groupOptionAggregations(ProductListingResultEvent $event): void
-    {
-        $ids = $this->collectOptionIds($event);
-
-        if (empty($ids)) {
-            return;
-        }
-
-        $criteria = new Criteria($ids);
-        $criteria->setLimit(500);
-        $criteria->addAssociation('group');
-        $criteria->addAssociation('media');
-        $criteria->addFilter(new EqualsFilter('group.filterable', true));
-        $criteria->setTitle('product-listing::property-filter');
-        $criteria->addSorting(new FieldSorting('id', FieldSorting::ASCENDING));
-
-        $mergedOptions = new PropertyGroupOptionCollection();
-
-        $repositoryIterator = new RepositoryIterator($this->optionRepository, $event->getContext(), $criteria);
-        while (($result = $repositoryIterator->fetch()) !== null) {
-            $mergedOptions->merge($result->getEntities());
-        }
-
-        // group options by their property-group
-        $grouped = $mergedOptions->groupByPropertyGroups();
-        $grouped->sortByPositions();
-        $grouped->sortByConfig();
-
-        $aggregations = $event->getResult()->getAggregations();
-
-        // remove id results to prevent wrong usages
-        $aggregations->remove('properties');
-        $aggregations->remove('configurators');
-        $aggregations->remove('options');
-        $aggregations->add(new EntityResult('properties', $grouped));
     }
 
     private function addCurrentFilters(ProductListingResultEvent $event): void

@@ -25,5 +25,10 @@
             <argument type="service" id="property_group.repository"/>
         </service>
 
+        <service id="Shopware\Core\Content\Property\Listing\PropertyAggregationResolver">
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument type="service" id="property_group_option.repository"/>
+            <argument type="service" id="property_group.repository"/>
+        </service>
     </services>
 </container>

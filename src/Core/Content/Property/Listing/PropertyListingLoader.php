@@ -34,6 +34,15 @@ class PropertyListingLoader extends AbstractPropertyListingLoader
 
         $groups->sortByConfig();
 
-        return $groups->first()->getOptions();
+        $group = $groups->first();
+
+        if (!$group) {
+            throw new \RuntimeException(sprintf('Property group with id "%s" not found', $groupId));
+        }
+        if (!$group->getOptions()) {
+            throw new \RuntimeException(sprintf('Property group with id "%s" has no options', $groupId));
+        }
+
+        return $group->getOptions();
     }
 }

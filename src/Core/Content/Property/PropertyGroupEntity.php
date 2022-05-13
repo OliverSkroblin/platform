@@ -58,6 +58,12 @@ class PropertyGroupEntity extends Entity
      */
     protected $translations;
 
+    /**
+     * Runtime variable which is used for on-demand listing filters
+     * contains only the option ids which are available in the current listing.
+     */
+    protected array $listingOptionIds = [];
+
     public function getName(): ?string
     {
         return $this->name;
@@ -146,5 +152,15 @@ class PropertyGroupEntity extends Entity
     public function setSortingType(string $sortingType): void
     {
         $this->sortingType = $sortingType;
+    }
+
+    public function getListingOptionIds(): array
+    {
+        return $this->listingOptionIds;
+    }
+
+    public function setListingOptionIds(array $listingOptionIds): void
+    {
+        $this->listingOptionIds = $listingOptionIds;
     }
 }
