@@ -172,6 +172,18 @@ class CmsController extends StorefrontController
     }
 
     /**
+     * @Since("6.0.0.0")
+     *
+     * Route to load the listing filters
+     *
+     * @Route("/widgets/properties/{groupId}", name="frontend.listing.properties", methods={"GET", "POST"}, defaults={"XmlHttpRequest"=true, "_routeScope"={"storefront"}})
+     */
+    public function properties(string $groupId, Request $request, SalesChannelContext $context): Response
+    {
+
+    }
+
+    /**
      * @Since("6.4.0.0")
      * @HttpCache()
      *
