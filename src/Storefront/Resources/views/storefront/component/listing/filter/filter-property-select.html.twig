@@ -11,15 +11,5 @@
 {% endif %}
 
 {% block component_filter_multi_select_list %}
-    <ul class="filter-multi-select-list">
-        {% for element in elements %}
-            {% block component_filter_multi_select_list_item %}
-                <li class="filter-multi-select-list-item">
-                    {% block component_filter_multi_select_list_item_inner %}
-                        {% sw_include '@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig' %}
-                    {% endblock %}
-                </li>
-            {% endblock %}
-        {% endfor %}
-    </ul>
+    {% sw_include '@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig' %}
 {% endblock %}

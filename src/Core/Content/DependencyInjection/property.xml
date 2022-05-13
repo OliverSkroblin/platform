@@ -21,5 +21,9 @@
             <tag name="shopware.entity.definition"/>
         </service>
 
+        <service id="Shopware\Core\Content\Property\Listing\PropertyListingLoader">
+            <argument type="service" id="property_group.repository"/>
+        </service>
+
     </services>
 </container>

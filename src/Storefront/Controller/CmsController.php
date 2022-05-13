@@ -7,8 +7,9 @@ use Shopware\Core\Content\Cms\Exception\PageNotFoundException;
 use Shopware\Core\Content\Cms\SalesChannel\AbstractCmsRoute;
 use Shopware\Core\Content\Product\SalesChannel\Detail\AbstractProductDetailRoute;
 use Shopware\Core\Content\Product\SalesChannel\Listing\AbstractProductListingRoute;
+use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
+use Shopware\Core\Content\Property\Listing\AbstractPropertyListingLoader;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 use Shopware\Core\Framework\Routing\Annotation\Since;
 use Shopware\Core\Framework\Routing\Exception\MissingRequestParameterException;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
@@ -63,6 +64,8 @@ class CmsController extends StorefrontController
 
     private EventDispatcherInterface $eventDispatcher;
 
+    private AbstractPropertyListingLoader $propertyLoader;
+
     /**
      * @internal
      */
@@ -73,7 +76,8 @@ class CmsController extends StorefrontController
         AbstractProductDetailRoute $productRoute,
         ProductReviewLoader $productReviewLoader,
         ProductCombinationFinder $combinationFinder,
-        EventDispatcherInterface $eventDispatcher
+        EventDispatcherInterface $eventDispatcher,
+        AbstractPropertyListingLoader $propertyLoader
     ) {
         $this->cmsRoute = $cmsRoute;
         $this->categoryRoute = $categoryRoute;
@@ -82,6 +86,7 @@ class CmsController extends StorefrontController
         $this->productReviewLoader = $productReviewLoader;
         $this->combinationFinder = $combinationFinder;
         $this->eventDispatcher = $eventDispatcher;
+        $this->propertyLoader = $propertyLoader;
     }
 
     /**
@@ -180,7 +185,15 @@ class CmsController extends StorefrontController
      */
     public function properties(string $groupId, Request $request, SalesChannelContext $context): Response
     {
+        $options = $this->propertyLoader->load($groupId, $context->getContext());
 
+        $ids = $request->get('optionIds');
+
+        $options = $options->filter(function (PropertyGroupOptionEntity $option) use ($ids) {
+            return \in_array($option->getId(), $ids, true);
+        });
+
+        return $this->render('@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig', ['elements' => $options]);
     }
 
     /**
