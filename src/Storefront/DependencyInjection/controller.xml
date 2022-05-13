@@ -146,6 +146,7 @@
             <argument type="service" id="Shopware\Storefront\Page\Product\Review\ProductReviewLoader"/>
             <argument type="service" id="Shopware\Storefront\Page\Product\Configurator\ProductCombinationFinder"/>
             <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="Shopware\Core\Content\Property\Listing\PropertyListingLoader"/>
 
             <call method="setContainer">
                 <argument type="service" id="service_container"/>

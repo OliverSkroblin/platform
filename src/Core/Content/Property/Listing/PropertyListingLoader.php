@@ -30,7 +30,7 @@ class PropertyListingLoader extends AbstractPropertyListingLoader
         $criteria->setTitle('product-listing::property-loader');
 
         /** @var PropertyGroupCollection $groups */
-        $groups = $this->repository->search($criteria, $context);
+        $groups = $this->repository->search($criteria, $context)->getEntities();
 
         $groups->sortByConfig();
 

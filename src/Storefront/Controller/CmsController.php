@@ -187,11 +187,13 @@ class CmsController extends StorefrontController
     {
         $options = $this->propertyLoader->load($groupId, $context->getContext());
 
-        $ids = $request->get('optionIds');
+        $ids = $request->get('optionIds', []);
 
-        $options = $options->filter(function (PropertyGroupOptionEntity $option) use ($ids) {
-            return \in_array($option->getId(), $ids, true);
-        });
+        if (!empty($ids)) {
+            $options = $options->filter(function (PropertyGroupOptionEntity $option) use ($ids) {
+                return \in_array($option->getId(), $ids, true);
+            });
+        }
 
         return $this->render('@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig', ['elements' => $options]);
     }
