@@ -11,6 +11,7 @@ export default class FilterPropertySelectPlugin extends FilterMultiSelectPlugin 
         onDemand: false,
         propertyId: '',
         listingOptionIds: [],
+        selectedOptions: [],
         propertyDropdownContainerClass: '.filter-multi-select-dropdown',
         propertyLoadingSelector: '.filter-property-loading'
     });
@@ -51,12 +52,21 @@ export default class FilterPropertySelectPlugin extends FilterMultiSelectPlugin 
 
         const checkboxes = DomAccess.querySelectorAll(this.el, this.options.checkboxSelector);
 
+        let selection = [];
+
         Iterator.iterate(checkboxes, (checkbox) => {
             if ( !this.options.listingOptionIds.includes(checkbox.id) ) {
                 const listItem = checkbox.closest(this.options.listItemSelector);
                 listItem.parentNode.removeChild(listItem);
             }
+
+            if ( this.options.selectedOptions.includes(checkbox.id) ) {
+                selection.push(checkbox.id);
+                checkbox.checked = true;
+            }
         });
+
+        this.selection = selection;
 
         super._registerEvents();
     }

@@ -1,26 +1,47 @@
 {% sw_extends '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' %}
 
+{% set onDemand = true %}
 {% if dataPluginSelectorOptions is not defined %}
     {% set dataPluginSelectorOptions = {
         name: name,
         propertyName: propertyName,
         propertyId: property.id,
         listingOptionIds: property.listingOptionIds,
-        onDemand: true,
+        selectedOptions: listing.currentFilters.properties,
+        onDemand: onDemand,
         snippets: {
             disabledFilterText: 'listing.disabledFilterTooltip'|trans|sw_sanitize
         }
     } %}
 {% endif %}
 
+{% block component_filter_multi_select_count %}
+    {% if onDemand %}
+        {% set selectCount = 0 %}
+        {% for currentProperty in listing.currentFilters.properties %}
+            {% if currentProperty in property.listingOptionIds %}
+                {% set selectCount = selectCount + 1 %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    <span class="filter-multi-select-count">
+        {% if selectCount > 0 %}({{ selectCount }}){% endif %}
+    </span>
+{% endblock %}
+
 {% block component_filter_multi_select_list %}
     {% if onDemand %}
-        {% sw_include '@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig' %}
-    {% else %}
         <div class="filter-property-loading">
             <div class="loader" role="status">
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
+        {% if elements|length > 0 %}
+            <div class="d-none">
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig' %}
+            </div>
+        {% endif%}
+    {% else %}
+        {% sw_include '@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig' %}
     {% endif %}
 {% endblock %}
