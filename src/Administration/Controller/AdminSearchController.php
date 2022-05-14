@@ -69,7 +69,9 @@ class AdminSearchController extends AbstractController
             throw new \RuntimeException('Search term is empty');
         }
 
-        $results = $this->searcher->elastic($term, $context);
+        $entities = $request->get('entities', []);
+
+        $results = $this->searcher->elastic($term, $entities, $context);
 
         foreach ($results as $entityName => $result) {
             $definition = $this->definitionRegistry->getByEntityName($entityName);

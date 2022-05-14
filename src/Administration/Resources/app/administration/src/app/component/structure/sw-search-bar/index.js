@@ -407,6 +407,10 @@ Component.register('sw-search-bar', {
             }
         },
 
+        _isEmptyObject(value) {
+            return !(typeof value === 'object' && Object.keys(value).length > 0);
+        },
+
         doListSearch: utils.debounce(function debouncedSearch() {
             const searchTerm = this.searchTerm.trim();
             this.$emit('search', searchTerm);
@@ -429,7 +433,7 @@ Component.register('sw-search-bar', {
                 this.showResultsContainer = false;
                 this.showResultsSearchTrends = false;
             }
-        }, 400),
+        }, 30),
 
         async loadResults(searchTerm) {
             this.isLoading = true;
@@ -461,7 +465,15 @@ Component.register('sw-search-bar', {
             let response;
 
             if (useElastic) {
-                response = await this.searchService.elastic(searchTerm, { 'sw-inheritance': true });
+                const names = [];
+                Object.keys(this.userSearchPreference).forEach((key) => {
+                    if (this._isEmptyObject(this.userSearchPreference[key])) {
+                        return;
+                    }
+                    names.push(key);
+                });
+
+                response = await this.searchService.elastic(searchTerm, names, { 'sw-inheritance': true });
             } else {
                 const queries = this.searchRankingService.buildGlobalSearchQueries(
                     this.userSearchPreference,

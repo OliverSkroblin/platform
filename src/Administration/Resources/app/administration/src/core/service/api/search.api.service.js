@@ -45,11 +45,11 @@ class SearchApiService extends ApiService {
     }
     /* eslint-enable no-unused-vars */
 
-    elastic(term, additionalHeaders = {}) {
+    elastic(term, entities, additionalHeaders = {}) {
         const headers = this.getBasicHeaders(additionalHeaders);
 
         return this.httpClient
-            .post(`${this.getApiBasePath()}/es-search`, { term }, { headers })
+            .post(`${this.getApiBasePath()}/es-search`, { term, entities }, { headers })
             .then((response) => {
                 return ApiService.handleResponse(response);
             });

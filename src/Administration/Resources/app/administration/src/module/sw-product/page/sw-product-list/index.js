@@ -216,6 +216,7 @@ Component.register('sw-product-list', {
                 .mergeWithStoredFilters(this.storeKey, this.productCriteria);
 
             criteria = await this.addQueryScores(this.term, criteria);
+            criteria.setTerm(this.term);
 
             // Clone product query to its variant
             criteria.queries.forEach(query => {
@@ -239,7 +240,7 @@ Component.register('sw-product-list', {
 
             try {
                 const result = await Promise.all([
-                    this.productRepository.search(criteria),
+                    this.productRepository.search(criteria, Shopware.Context.api, { 'admin-module': 'product' }),
                     this.currencyRepository.search(this.currencyCriteria),
                 ]);
 

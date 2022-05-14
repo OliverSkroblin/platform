@@ -6,6 +6,7 @@ use Elasticsearch\Client;
 use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
 use ONGR\ElasticsearchDSL\Query\FullText\MatchQuery;
 use ONGR\ElasticsearchDSL\Query\TermLevel\TermQuery;
+use ONGR\ElasticsearchDSL\Query\TermLevel\TermsQuery;
 use ONGR\ElasticsearchDSL\Query\TermLevel\WildcardQuery;
 use ONGR\ElasticsearchDSL\Search;
 use Shopware\Administration\Framework\Search\CriteriaCollection;
@@ -34,51 +35,6 @@ class AdminSearcher
         $this->tokenizer = $tokenizer;
     }
 
-    public function elastic(string $term, Context $context): array
-    {
-        $result = [];
-
-        $entities = ['product', 'customer', 'order', 'media', 'cms_page', 'shipping_method', 'payment_method', 'customer_group', 'property_group', 'promotion', 'landing_page', 'product_manufacturer', 'sales_channel'];
-
-        $tokens = $this->tokenizer->tokenize($term);
-
-        foreach ($entities as $entity) {
-            if (!$this->definitionRegistry->has($entity)) {
-                continue;
-            }
-
-            if (!$context->isAllowed($entity . ':' . AclRoleDefinition::PRIVILEGE_READ)) {
-                continue;
-            }
-
-            $response = $this->client->search([
-                'index' => ElasticsearchAdminIndexingCommand::ADMIN_SEARCH_INDEX,
-                'track_total_hits' => true,
-                'body' => $this->buildEsQuery($tokens, $entity)->toArray(),
-            ]);
-
-            $hits = $response['hits']['hits'];
-            if (empty($hits)) {
-                continue;
-            }
-
-            $ids = \array_map(static function(array $hit) {
-                return $hit['_source']['id'];
-            }, $hits);
-
-            $criteria = new Criteria($ids);
-            $repository = $this->definitionRegistry->getRepository($entity);
-            $collection = $repository->search($criteria, $context);
-
-            $result[$entity] = [
-                'data' => $collection->getEntities(),
-                'total' => $collection->getTotal(),
-            ];
-        }
-
-        return $result;
-    }
-
     public function search(CriteriaCollection $entities, Context $context): array
     {
         $result = [];
@@ -104,10 +60,13 @@ class AdminSearcher
         return $result;
     }
 
-    private function buildEsQuery(array $tokens, string $entity): Search
+    public function resolveTerm(string $term, string $entity, int $page = 1, int $limit = 50): array
     {
+        $tokens = $this->tokenizer->tokenize($term);
+
         $search = new Search();
-        $search->setSize(10);
+        $search->setFrom($limit * ($page - 1));
+        $search->setSize($limit);
 
         $query = new BoolQuery();
         foreach ($tokens as $token) {
@@ -115,13 +74,99 @@ class AdminSearcher
             $query->add(new WildcardQuery('text', '*' . $token . '*'), BoolQuery::SHOULD);
         }
         $query->addParameter('minimum_should_match', 1);
-
         $search->addQuery($query);
 
         $bool = new BoolQuery();
         $bool->add(new TermQuery('entity_name', $entity), BoolQuery::MUST);
         $search->addQuery($bool, BoolQuery::FILTER);
 
-        return $search;
+        $response = $this->client->search([
+            'index' => ElasticsearchAdminIndexingCommand::ADMIN_SEARCH_INDEX,
+            'track_total_hits' => true,
+            'body' => $search->toArray(),
+        ]);
+
+        $ids = [];
+        $total = $response['hits']['total']['value'];
+
+        foreach ($response['hits']['hits'] as $hit) {
+            $ids[] = $hit['_source']['id'];
+        }
+
+        return ['ids' => $ids, 'total' => $total];
+    }
+
+    public function elastic(string $term, array $entities, Context $context, int $limit = 5): array
+    {
+        $search = $this->buildGlobalSearch($term, $entities, $limit);
+
+        $response = $this->client->search([
+            'index' => ElasticsearchAdminIndexingCommand::ADMIN_SEARCH_INDEX,
+            'track_total_hits' => true,
+            'body' => $search,
+        ]);
+
+        $result = [];
+        foreach ($response['hits']['hits'] as $hit) {
+            $entity = \array_shift($hit['fields']['entity_name']);
+
+            $hits = [];
+            foreach ($hit['inner_hits']['hits']['hits']['hits'] as $inner) {
+                $hits[] = $inner['_source']['id'];
+            }
+
+            $result[$entity] = [
+                'ids' => $hits,
+                'total' => $hit['inner_hits']['hits']['hits']['total']['value']
+            ];
+        }
+
+        $mapped = [];
+        foreach ($result as $entity => $values) {
+            if (!$this->definitionRegistry->has($entity)) {
+                continue;
+            }
+            if (!$context->isAllowed($entity . ':' . AclRoleDefinition::PRIVILEGE_READ)) {
+                continue;
+            }
+
+            $repository = $this->definitionRegistry->getRepository($entity);
+
+            $collection = $repository->search(new Criteria($values['ids']), $context);
+
+            $mapped[$entity] = [
+                'data' => $collection->getEntities(),
+                'total' => $values['total']
+            ];
+        }
+
+        return $mapped;
+    }
+
+    private function buildGlobalSearch(string $term, array $entities, int $limit): array
+    {
+        $tokens = $this->tokenizer->tokenize($term);
+
+        $search = new Search();
+        $query = new BoolQuery();
+        foreach ($tokens as $token) {
+            $query->add(new MatchQuery('text', $token), BoolQuery::SHOULD);
+            $query->add(new WildcardQuery('text', '*' . $token . '*'), BoolQuery::SHOULD);
+        }
+        $query->addParameter('minimum_should_match', 1);
+        $search->addQuery($query);
+
+        $bool = new BoolQuery();
+        $bool->add(new TermsQuery('entity_name', \array_values($entities)), BoolQuery::MUST);
+        $search->addQuery($bool, BoolQuery::FILTER);
+
+        $array = $search->toArray();
+
+        $array['collapse'] = [
+            'field' => 'entity_name',
+            'inner_hits' => ['name' => 'hits', 'size' => $limit],
+        ];
+
+        return $array;
     }
 }
