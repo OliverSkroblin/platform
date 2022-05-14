@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Shopware\Elasticsearch\Admin;
 
@@ -51,7 +51,7 @@ class ResolveTermSubscriber implements EventSubscriberInterface
         $request->request->set('elastic-total', $ids['total']);
     }
 
-    public function response(ResponseEvent $event)
+    public function response(ResponseEvent $event): void
     {
         if (!$event->getRequest()->request->has('elastic-total')) {
             return;
@@ -67,6 +67,4 @@ class ResolveTermSubscriber implements EventSubscriberInterface
 
         $event->getResponse()->setContent(\json_encode($content));
     }
-
-
 }

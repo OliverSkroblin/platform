@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Shopware\Elasticsearch\Admin;
 
@@ -67,5 +67,4 @@ class AdminSearchController extends AbstractController
 
         return new JsonResponse(['data' => $results]);
     }
-
 }

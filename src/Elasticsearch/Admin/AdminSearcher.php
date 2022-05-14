@@ -14,7 +14,6 @@ use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\DefinitionInstanceRegistry;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Term\Tokenizer;
-use Shopware\Elasticsearch\Framework\Command\ElasticsearchAdminIndexingCommand;
 
 class AdminSearcher
 {
@@ -55,7 +54,7 @@ class AdminSearcher
         $search->addQuery($bool, BoolQuery::FILTER);
 
         $response = $this->client->search([
-            'index' => ElasticsearchAdminIndexingCommand::ADMIN_SEARCH_INDEX,
+            'index' => AdminSearchRegistry::ADMIN_SEARCH_INDEX,
             'track_total_hits' => true,
             'body' => $search->toArray(),
         ]);
@@ -75,7 +74,7 @@ class AdminSearcher
         $search = $this->buildGlobalSearch($term, $entities, $limit);
 
         $response = $this->client->search([
-            'index' => ElasticsearchAdminIndexingCommand::ADMIN_SEARCH_INDEX,
+            'index' => AdminSearchRegistry::ADMIN_SEARCH_INDEX,
             'track_total_hits' => true,
             'body' => $search,
         ]);
@@ -91,7 +90,7 @@ class AdminSearcher
 
             $result[$entity] = [
                 'ids' => $hits,
-                'total' => $hit['inner_hits']['hits']['hits']['total']['value']
+                'total' => $hit['inner_hits']['hits']['hits']['total']['value'],
             ];
         }
 
@@ -110,7 +109,7 @@ class AdminSearcher
 
             $mapped[$entity] = [
                 'data' => $collection->getEntities(),
-                'total' => $values['total']
+                'total' => $values['total'],
             ];
         }
 
