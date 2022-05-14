@@ -11,7 +11,6 @@ export default class FilterPropertySelectPlugin extends FilterMultiSelectPlugin 
         onDemand: false,
         propertyId: '',
         listingOptionIds: [],
-        selectedOptions: [],
         propertyDropdownContainerClass: '.filter-multi-select-dropdown',
         propertyLoadingSelector: '.filter-property-loading'
     });
@@ -28,6 +27,8 @@ export default class FilterPropertySelectPlugin extends FilterMultiSelectPlugin 
     _registerEvents() {
         if ( this.options.onDemand ) {
             const collapse = this.el;
+
+            console.log(this.selection);
 
             /** @deprecated tag:v6.5.0 - Bootstrap v5 uses native HTML elements and events to subscribe to Collapse plugin events */
             if (Feature.isActive('v6.5.0.0')) {
@@ -52,21 +53,16 @@ export default class FilterPropertySelectPlugin extends FilterMultiSelectPlugin 
 
         const checkboxes = DomAccess.querySelectorAll(this.el, this.options.checkboxSelector);
 
-        let selection = [];
-
         Iterator.iterate(checkboxes, (checkbox) => {
             if ( !this.options.listingOptionIds.includes(checkbox.id) ) {
                 const listItem = checkbox.closest(this.options.listItemSelector);
                 listItem.parentNode.removeChild(listItem);
             }
 
-            if ( this.options.selectedOptions.includes(checkbox.id) ) {
-                selection.push(checkbox.id);
+            if ( this.selection.includes(checkbox.id) ) {
                 checkbox.checked = true;
             }
         });
-
-        this.selection = selection;
 
         super._registerEvents();
     }
