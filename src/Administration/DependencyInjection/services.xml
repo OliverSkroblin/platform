@@ -99,8 +99,6 @@
 
         <service id="Shopware\Administration\Service\AdminSearcher">
             <argument type="service" id="Shopware\Core\Framework\DataAbstractionLayer\DefinitionInstanceRegistry"/>
-            <argument type="service" id="Elasticsearch\Client"/>
-            <argument type="service" id="Shopware\Core\Framework\DataAbstractionLayer\Search\Term\Tokenizer"/>
         </service>
 
         <service id="Shopware\Administration\Framework\Routing\AdministrationRouteScope">
@@ -139,11 +137,6 @@
         <service id="Shopware\Administration\System\SalesChannel\Subscriber\SalesChannelUserConfigSubscriber">
             <argument type="service" id="user_config.repository" />
             <tag name="kernel.event_subscriber"/>
-        </service>
-
-        <service id="Shopware\Administration\Subscriber\ElasticAdminSearchSubscriber">
-            <tag name="kernel.event_subscriber"/>
-            <argument type="service" id="Shopware\Administration\Service\AdminSearcher"/>
         </service>
     </services>
 </container>

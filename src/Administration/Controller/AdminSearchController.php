@@ -58,39 +58,6 @@ class AdminSearchController extends AbstractController
     }
 
     /**
-     * @Since("6.4.12.0")
-     * @Route("/api/_admin/es-search", name="api.admin.es-search", methods={"POST"}, defaults={"_routeScope"={"administration"}})
-     */
-    public function elastic(Request $request, Context $context): Response
-    {
-        $term = trim($request->get('term', ''));
-
-        if (empty($term)) {
-            throw new \RuntimeException('Search term is empty');
-        }
-
-        $entities = $request->get('entities', []);
-
-        $results = $this->searcher->elastic($term, $entities, $context);
-
-        foreach ($results as $entityName => $result) {
-            $definition = $this->definitionRegistry->getByEntityName($entityName);
-
-            /** @var EntityCollection $entityCollection */
-            $entityCollection = $result['data'];
-            $entities = [];
-
-            foreach ($entityCollection->getElements() as $key => $entity) {
-                $entities[$key] = $this->entityEncoder->encode(new Criteria(), $definition, $entity, '/api');
-            }
-
-            $results[$entityName]['data'] = $entities;
-        }
-
-        return new JsonResponse(['data' => $results]);
-    }
-
-    /**
      * @Since("6.4.5.0")
      * @Route("/api/_admin/search", name="api.admin.search", methods={"POST"}, defaults={"_routeScope"={"administration"}})
      */

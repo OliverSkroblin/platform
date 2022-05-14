@@ -1,13 +1,12 @@
 <?php
 
-namespace Shopware\Administration\Subscriber;
+namespace Shopware\Elasticsearch\Admin;
 
-use Shopware\Administration\Service\AdminSearcher;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
-class ElasticAdminSearchSubscriber implements EventSubscriberInterface
+class ResolveTermSubscriber implements EventSubscriberInterface
 {
     private AdminSearcher $searcher;
 
