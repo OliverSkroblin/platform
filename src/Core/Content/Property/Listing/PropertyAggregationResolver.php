@@ -3,6 +3,7 @@
 namespace Shopware\Core\Content\Property\Listing;
 
 use Doctrine\DBAL\Connection;
+use Shopware\Core\Content\Product\SalesChannel\Listing\FilterCollection;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionCollection;
 use Shopware\Core\Content\Property\PropertyGroupCollection;
 use Shopware\Core\Framework\Context;
@@ -125,6 +126,9 @@ class PropertyAggregationResolver extends AbstractPropertyAggregationResolver
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsAnyFilter('options.id', $ids));
         $criteria->addFilter(new EqualsFilter('filterable', true));
+
+        $this->addSelected($result, $criteria);
+
         $criteria->setTitle('product-listing::property-group-filter');
 
         /** @var PropertyGroupCollection $groups */
@@ -142,5 +146,21 @@ class PropertyAggregationResolver extends AbstractPropertyAggregationResolver
         $aggregations->remove('configurators');
         $aggregations->remove('options');
         $aggregations->add(new EntityResult('properties', $groups));
+    }
+
+    private function addSelected(EntitySearchResult $result, Criteria $criteria): void
+    {
+        $filters = $result->getCriteria()->getExtension('filters');
+        if (!$filters instanceof FilterCollection) {
+            return;
+        }
+        if (!$filters->has('properties')) {
+            return;
+        }
+
+        $selected = $filters->get('properties')->getValues();
+        if (!empty($selected)) {
+            $criteria->getAssociation('options')->addFilter(new EqualsAnyFilter('id', $selected));
+        }
     }
 }
