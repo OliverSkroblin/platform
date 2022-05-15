@@ -407,6 +407,10 @@ Component.register('sw-search-bar', {
             }
         },
 
+        _isEmptyObject(value) {
+            return !(typeof value === 'object' && Object.keys(value).length > 0);
+        },
+
         doListSearch: utils.debounce(function debouncedSearch() {
             const searchTerm = this.searchTerm.trim();
             this.$emit('search', searchTerm);
@@ -429,7 +433,7 @@ Component.register('sw-search-bar', {
                 this.showResultsContainer = false;
                 this.showResultsSearchTrends = false;
             }
-        }, 400),
+        }, 30),
 
         async loadResults(searchTerm) {
             this.isLoading = true;
@@ -456,13 +460,30 @@ Component.register('sw-search-bar', {
                 return;
             }
 
-            const queries = this.searchRankingService.buildGlobalSearchQueries(
-                this.userSearchPreference,
-                searchTerm,
-                this.criteriaCollection,
-                this.searchLimit,
-            );
-            const response = await this.searchService.searchQuery(queries, { 'sw-inheritance': true });
+            const useElastic = true;
+
+            let response;
+
+            if (useElastic) {
+                const names = [];
+                Object.keys(this.userSearchPreference).forEach((key) => {
+                    if (this._isEmptyObject(this.userSearchPreference[key])) {
+                        return;
+                    }
+                    names.push(key);
+                });
+
+                response = await this.searchService.elastic(searchTerm, names, { 'sw-inheritance': true });
+            } else {
+                const queries = this.searchRankingService.buildGlobalSearchQueries(
+                    this.userSearchPreference,
+                    searchTerm,
+                    this.criteriaCollection,
+                    this.searchLimit,
+                );
+                response = await this.searchService.searchQuery(queries, { 'sw-inheritance': true });
+            }
+
             const data = response.data;
 
             if (!data) {

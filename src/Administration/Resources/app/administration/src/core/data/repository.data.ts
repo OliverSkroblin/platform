@@ -115,8 +115,10 @@ export default class Repository {
     /**
      * Sends a search request for the repository entity.
      */
-    search(criteria: Criteria, context = Shopware.Context.api): Promise<EntityCollection> {
-        const headers = this.buildHeaders(context);
+    search(criteria: Criteria, context = Shopware.Context.api, additionalHeaders = {}): Promise<EntityCollection> {
+        let headers = this.buildHeaders(context);
+
+        headers = Object.assign({}, headers, additionalHeaders);
 
         const url = `/search${this.route}`;
 

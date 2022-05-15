@@ -2,10 +2,12 @@
 
 namespace Shopware\Administration\Service;
 
+use Elasticsearch\Client;
 use Shopware\Administration\Framework\Search\CriteriaCollection;
 use Shopware\Core\Framework\Api\Acl\Role\AclRoleDefinition;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\DefinitionInstanceRegistry;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Term\Tokenizer;
 
 class AdminSearcher
 {
@@ -14,7 +16,7 @@ class AdminSearcher
     /**
      * @internal
      */
-    public function __construct(DefinitionInstanceRegistry $definitionRegistry)
+    public function __construct(DefinitionInstanceRegistry $definitionRegistry, Client $client, Tokenizer $tokenizer)
     {
         $this->definitionRegistry = $definitionRegistry;
     }
