@@ -47,7 +47,6 @@ class ResolveTermSubscriber implements EventSubscriberInterface
         $ids = $this->searcher->resolveTerm($term, $module, $page, $limit);
 
         $request->request->set('ids', $ids['ids']);
-        $request->request->set('page', 1);
         $request->request->set('elastic-total', $ids['total']);
     }
 

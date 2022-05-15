@@ -187,7 +187,7 @@ class CmsController extends StorefrontController
     {
         $options = $this->propertyLoader->load($groupId, $context->getContext());
 
-        return $this->render('@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig', ['elements' => $options]);
+        return $this->renderStorefront('@Storefront/storefront/component/listing/filter/filter-property-select-items.html.twig', ['elements' => $options]);
     }
 
     /**

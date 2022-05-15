@@ -55,9 +55,11 @@ class AdminSearchRegistry extends AbstractMessageHandler implements EventSubscri
 
     public function iterate(): void
     {
-        if (!$this->indexExists()) {
-            $this->createIndex();
+        if ($this->indexExists()) {
+            $this->client->indices()->delete(['index' => self::ADMIN_SEARCH_INDEX]);
         }
+
+        $this->createIndex();
 
         foreach ($this->indexer as $indexer) {
             $iterator = $indexer->getIterator();
