@@ -32,17 +32,19 @@ export default class FilterPropertySelectPlugin extends FilterMultiSelectPlugin 
 
             /** @deprecated tag:v6.5.0 - Bootstrap v5 uses native HTML elements and events to subscribe to Collapse plugin events */
             if (Feature.isActive('v6.5.0.0')) {
-                collapse.addEventListener('show.bs.dropdown', this._onDropdownShow.bind(this));
+                collapse.addEventListener('show.bs.dropdown', this._onPropertyOptionsShow.bind(this));
+                collapse.addEventListener('shown.bs.collapse', this._onPropertyOptionsShow.bind(this));
             } else {
                 const $collapse = $(collapse);
-                $collapse.on('show.bs.dropdown', this._onDropdownShow.bind(this));
+                $collapse.on('show.bs.dropdown', this._onPropertyOptionsShow.bind(this));
+                $collapse.on('shown.bs.collapse', this._onPropertyOptionsShow.bind(this));
             }
         } else {
             super._registerEvents();
         }
     }
 
-    _onDropdownShow() {
+    _onPropertyOptionsShow() {
         if ( this.el.querySelectorAll(this.options.propertyLoadingSelector).length > 0 ) {
             this._client.get('/widgets/properties/' + this.options.propertyId, this._setPropertyOptions.bind(this));
         }
